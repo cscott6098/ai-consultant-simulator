@@ -389,6 +389,23 @@
   </button>
 </div>
 
+<!-- API Key Modal -->
+<div class="modal-overlay" id="key-modal" style="display:none">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-handle"></div>
+    <div class="modal-tag">Required to Run</div>
+    <h3>Enter Your Anthropic API Key</h3>
+    <p>This simulator uses the Anthropic API. Outside of Claude.ai you need your own key. Get one free at <strong style="color:var(--accent)">console.anthropic.com</strong> then paste it below.</p>
+    <div style="margin:14px 0">
+      <input id="api-key-input" type="password" placeholder="sk-ant-..."
+        style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.82rem;padding:11px 13px;outline:none"
+        onkeydown="if(event.key==='Enter')saveApiKey()" />
+      <div id="key-error" style="color:var(--red);font-size:0.75rem;margin-top:6px;min-height:18px"></div>
+    </div>
+    <button class="modal-btn" onclick="saveApiKey()">Save and Continue</button>
+  </div>
+</div>
+
 <!-- Modal -->
 <div class="modal-overlay" id="situation-modal" style="display:none" onclick="if(event.target===this)closeSituation()">
   <div class="modal" id="situation-content"></div>
@@ -475,13 +492,34 @@ let excellentPicks      = 0;
 let totalPicks          = 0;
 let awaitingContinue    = false;
 let currentOptions      = [];
+let anthropicKey        = sessionStorage.getItem('anthropic_key') || '';
 let skills = { discovery:50, pitching:50, objection:50, closing:50 };
 let isMobile = () => window.innerWidth <= 768;
 
 // ════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════
+function checkApiKey() {
+  if (anthropicKey) return;
+  var host = window.location.hostname;
+  var inClaude = (host === '' || host === 'localhost' || host.includes('claude.ai'));
+  if (!inClaude) {
+    document.getElementById('key-modal').style.display = 'flex';
+  }
+}
+
+function saveApiKey() {
+  var val = document.getElementById('api-key-input').value.trim();
+  var errEl = document.getElementById('key-error');
+  if (!val) { errEl.textContent = 'Please enter a key.'; return; }
+  anthropicKey = val;
+  try { sessionStorage.setItem('anthropic_key', val); } catch(e) {}
+  document.getElementById('key-modal').style.display = 'none';
+  errEl.textContent = '';
+}
+
 function init() {
+  checkApiKey();
   renderClients();
   renderSkillBars();
   // Set welcome hint based on device
@@ -699,8 +737,10 @@ Respond ONLY in this exact JSON format, no markdown:
 {"options":[{"letter":"A","text":"...","quality":"excellent","explanation":"..."},{"letter":"B","text":"...","quality":"good","explanation":"..."},{"letter":"C","text":"...","quality":"mediocre","explanation":"..."},{"letter":"D","text":"...","quality":"wrong","explanation":"..."}],"phase_tip":"..."}`;
 
   try {
+    var hdrs1 = {'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+    if (anthropicKey) hdrs1['x-api-key'] = anthropicKey;
     const res  = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json'},
+      method:'POST', headers: hdrs1,
       body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1200, messages:[{ role:'user', content:prompt }] })
     });
     const data   = await res.json();
@@ -710,7 +750,9 @@ Respond ONLY in this exact JSON format, no markdown:
     ['A','B','C','D'].forEach((l,i) => { opts[i].letter = l; });
     renderChoices(opts, parsed.phase_tip);
   } catch(e) {
-    document.getElementById('choices-container').innerHTML = '<div class="choices-loading">Error loading — try resetting.</div>';
+    console.error('loadChoices:', e);
+    document.getElementById('choices-container').innerHTML = '<div class="choices-loading">Error loading options. Check your API key or connection.</div>';
+    if (!anthropicKey) document.getElementById('key-modal').style.display = 'flex';
   }
 }
 
@@ -885,8 +927,10 @@ async function getClientResponseText(userMsg) {
     if (!messages.length || messages[messages.length-1].role !== 'user') {
       messages.push({ role:'user', content: userMsg });
     }
+    var hdrs2 = {'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+    if (anthropicKey) hdrs2['x-api-key'] = anthropicKey;
     const res  = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json'},
+      method:'POST', headers: hdrs2,
       body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000, system:currentClient.systemPrompt, messages })
     });
     const data = await res.json();
