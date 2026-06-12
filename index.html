@@ -567,7 +567,7 @@ function selectClient(id) {
 
   document.getElementById('welcome-screen').style.display = 'none';
   document.getElementById('info-bar').style.display       = 'flex';
-  document.getElementById('choices-area').style.display   = 'flex';
+  document.getElementById('choices-area').style.display   = 'block';
 
   document.getElementById('info-avatar').textContent      = currentClient.emoji;
   document.getElementById('info-avatar').style.background = currentClient.bg;
@@ -609,6 +609,17 @@ function closeSituation() { document.getElementById('situation-modal').style.dis
 
 async function startSession() {
   closeSituation();
+  // Always reset conversation when starting — prevents corruption if brief
+  // is reopened mid-session and Start Session clicked again
+  conversationHistory = [];
+  currentPhaseIdx     = 0;
+  phaseExchanges      = 0;
+  awaitingContinue    = false;
+  currentOptions      = [];
+  removeMobileContinue();
+  document.getElementById('chat-area').innerHTML = '';
+  setFeedback('<div style="font-size:0.76rem;color:var(--muted);text-align:center;padding:14px 0;">Pick a response to see coaching</div>');
+  renderPhaseBar();
   showChoicesLoading();
   // Push the trigger as a user message FIRST so history always starts with user
   const trigger = "Greet the consultant naturally as if meeting for the first time. 2-3 sentences, hint at your main problem. No asterisks or stage directions.";
@@ -803,20 +814,22 @@ function showChoiceFeedback(chosen, allOptions) {
   const scoreMap = { excellent:95, good:72, mediocre:45, wrong:15 };
   const excellent = allOptions.find(o => o.quality === 'excellent');
 
+  const safeExpl = (t) => String(t).replace(/</g,'&lt;').replace(/>/g,'&gt;');
   let html = `<div class="feedback-card ${clsMap[chosen.quality]}">
     <div class="fb-score" style="color:${colorMap[chosen.quality]}">${scoreMap[chosen.quality]}/100</div>
     <div class="fb-label">${labelMap[chosen.quality]}</div>
-    <div class="fb-text">${chosen.explanation}</div>
+    <div class="fb-text">${safeExpl(chosen.explanation)}</div>
   </div>`;
 
   if (chosen.quality === 'excellent') {
-    html += `<div class="explanation-box correct"><strong>🔥 Why This Works</strong>${chosen.explanation}</div>`;
+    html += `<div class="explanation-box correct"><strong>🔥 Why This Works</strong>${safeExpl(chosen.explanation)}</div>`;
+    html += `<div class="explanation-box ideal" style="background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.15)"><strong>💡 What Made It Ideal</strong>You led with the right approach for this phase and this specific client. Keep this energy going into the next exchange.</div>`;
   }
   if (chosen.quality === 'wrong') {
-    html += `<div class="explanation-box incorrect"><strong>⚠️ What Went Wrong</strong>${chosen.explanation}</div>`;
+    html += `<div class="explanation-box incorrect"><strong>⚠️ What Went Wrong</strong>${safeExpl(chosen.explanation)}</div>`;
   }
   if (chosen.quality !== 'excellent' && excellent) {
-    html += `<div class="explanation-box ideal"><strong>✅ Best Answer Was (${excellent.letter})</strong>"${excellent.text}"<br><br>${excellent.explanation}</div>`;
+    html += `<div class="explanation-box ideal"><strong>✅ Best Answer Was (${excellent.letter})</strong>"${safeExpl(excellent.text)}"<br><br>${safeExpl(excellent.explanation)}</div>`;
   }
   setFeedback(html);
 }
@@ -865,6 +878,10 @@ async function getClientResponseText(userMsg) {
     let messages = [...conversationHistory];
     // Ensure messages don't start with assistant (Anthropic requires user-first)
     while (messages.length && messages[0].role === 'assistant') messages.shift();
+    // Trim to last 12 messages to avoid token limit — keep first msg for context
+    if (messages.length > 12) {
+      messages = [messages[0], ...messages.slice(-11)];
+    }
     if (!messages.length || messages[messages.length-1].role !== 'user') {
       messages.push({ role:'user', content: userMsg });
     }
@@ -883,6 +900,7 @@ async function getClientResponseText(userMsg) {
 function resetChat() {
   if (!currentClient) return;
   conversationHistory = []; currentPhaseIdx = 0; phaseExchanges = 0; awaitingContinue = false; currentOptions = [];
+  removeMobileContinue();
   document.getElementById('chat-area').innerHTML = '';
   setFeedback('<div style="font-size:0.76rem;color:var(--muted);text-align:center;padding:14px 0;">Pick a response to see coaching</div>');
   renderPhaseBar();
