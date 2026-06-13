@@ -492,7 +492,7 @@ let excellentPicks      = 0;
 let totalPicks          = 0;
 let awaitingContinue    = false;
 let currentOptions      = [];
-let anthropicKey        = sessionStorage.getItem('anthropic_key') || '';
+let anthropicKey        = localStorage.getItem('anthropic_key') || '';
 let skills = { discovery:50, pitching:50, objection:50, closing:50 };
 let isMobile = () => window.innerWidth <= 768;
 
@@ -513,7 +513,7 @@ function saveApiKey() {
   var errEl = document.getElementById('key-error');
   if (!val) { errEl.textContent = 'Please enter a key.'; return; }
   anthropicKey = val;
-  try { sessionStorage.setItem('anthropic_key', val); } catch(e) {}
+  try { localStorage.setItem('anthropic_key', val); } catch(e) {}
   document.getElementById('key-modal').style.display = 'none';
   errEl.textContent = '';
 }
