@@ -4,6 +4,51 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>AI Consultant Simulator</title>
+<meta name="description" content="AI-powered sales consultant training simulator"/>
+<meta name="theme-color" content="#111318"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Consultant Sim"/>
+
+<!-- Emoji favicon via SVG -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23111318'/><text y='.9em' font-size='72' x='12'>🧠</text></svg>"/>
+
+<!-- Apple home screen icon via canvas-generated PNG -->
+<link rel="apple-touch-icon" id="apple-icon" href=""/>
+
+<script>
+// Generate a home screen icon as a canvas PNG at runtime
+(function() {
+  var c = document.createElement('canvas');
+  c.width = 180; c.height = 180;
+  var ctx = c.getContext('2d');
+  // Background
+  var grad = ctx.createLinearGradient(0,0,180,180);
+  grad.addColorStop(0, '#111318');
+  grad.addColorStop(1, '#1e2330');
+  ctx.fillStyle = grad;
+  ctx.roundRect(0, 0, 180, 180, 36);
+  ctx.fill();
+  // Accent border
+  ctx.strokeStyle = '#00e5ff';
+  ctx.lineWidth = 4;
+  ctx.roundRect(4, 4, 172, 172, 32);
+  ctx.stroke();
+  // Brain emoji
+  ctx.font = '100px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🧠', 90, 82);
+  // Label
+  ctx.font = 'bold 18px sans-serif';
+  ctx.fillStyle = '#00e5ff';
+  ctx.fillText('CONSULTANT', 90, 148);
+  // Set as apple touch icon
+  var link = document.getElementById('apple-icon');
+  if (link) link.href = c.toDataURL('image/png');
+})();
+</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
