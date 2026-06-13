@@ -18,33 +18,40 @@
 <link rel="apple-touch-icon" id="apple-icon" href=""/>
 
 <script>
-// Generate a home screen icon as a canvas PNG at runtime
 (function() {
   var c = document.createElement('canvas');
   c.width = 180; c.height = 180;
   var ctx = c.getContext('2d');
-  // Background
-  var grad = ctx.createLinearGradient(0,0,180,180);
-  grad.addColorStop(0, '#111318');
-  grad.addColorStop(1, '#1e2330');
-  ctx.fillStyle = grad;
-  ctx.roundRect(0, 0, 180, 180, 36);
+
+  // Background — use arc instead of roundRect for compatibility
+  ctx.beginPath();
+  var r = 36, x = 0, y = 0, w = 180, h = 180;
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+  ctx.fillStyle = '#111318';
   ctx.fill();
-  // Accent border
+
+  // Cyan border
   ctx.strokeStyle = '#00e5ff';
-  ctx.lineWidth = 4;
-  ctx.roundRect(4, 4, 172, 172, 32);
+  ctx.lineWidth = 5;
   ctx.stroke();
-  // Brain emoji
-  ctx.font = '100px serif';
+
+  // Briefcase emoji — large and centered
+  ctx.font = '96px Apple Color Emoji, Segoe UI Emoji, sans-serif';
   ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('💼', 90, 82);
-  // Label
-  ctx.font = 'bold 18px sans-serif';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('💼', 90, 115);
+
+  // Label text
+  ctx.font = 'bold 16px -apple-system, Arial, sans-serif';
   ctx.fillStyle = '#00e5ff';
-  ctx.fillText('CONSULTANT', 90, 148);
-  // Set as apple touch icon
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('CONSULTANT', 90, 162);
+
   var link = document.getElementById('apple-icon');
   if (link) link.href = c.toDataURL('image/png');
 })();
